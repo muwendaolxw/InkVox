@@ -1,0 +1,1804 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inkvox.dev/scene.schema.v0.4.json",
+  "title": "InkVox Scene Schema v0.4",
+  "description": "Scene JSON intermediate representation for InkVox. v0.3 emphasizes multi-view evidence, complex geometry representations, object groups, component hierarchy, materials, constraints, assets, and validator audit trails. Coordinate convention: meters/degrees; origin = downstage center on floor; +X = audience right; +Y = upstage depth; +Z = up. Design parameters: Position, Size (L=size.w, W=size.d, H=size.h), Shape, Material and Color. Preview generation never implies adoption or professional review.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "scene"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.4"
+    },
+    "scene": {
+      "$ref": "#/$defs/scene"
+    }
+  },
+  "$defs": {
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "source_kind": {
+      "enum": [
+        "sketch",
+        "voice",
+        "canonical_render",
+        "front",
+        "front_left_45",
+        "front_right_45",
+        "semi_overhead",
+        "multi_view",
+        "inferred",
+        "validator",
+        "user",
+        "unknown"
+      ]
+    },
+    "vec2": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "vec3": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "coordinate_system": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "units": {
+          "const": "m"
+        },
+        "angle_units": {
+          "const": "deg"
+        },
+        "origin": {
+          "const": "downstage_center_floor"
+        },
+        "x": {
+          "const": "audience_right"
+        },
+        "y": {
+          "const": "upstage_depth"
+        },
+        "z": {
+          "const": "up"
+        }
+      }
+    },
+    "minmax": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "size": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "w": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "d": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "h": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "const": "m"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "source": {
+          "$ref": "#/$defs/source_kind"
+        },
+        "basis": {
+          "type": "string",
+          "description": "How this size was obtained, e.g. relative_to_stage_width, voice_explicit, validator_default."
+        }
+      }
+    },
+    "size_range": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "w": {
+          "$ref": "#/$defs/minmax"
+        },
+        "d": {
+          "$ref": "#/$defs/minmax"
+        },
+        "h": {
+          "$ref": "#/$defs/minmax"
+        }
+      }
+    },
+    "relative_size": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "relative_to": {
+          "type": "string"
+        },
+        "width_ratio": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "depth_ratio": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height_ratio": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "source": {
+          "$ref": "#/$defs/source_kind"
+        }
+      }
+    },
+    "footprint": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "enum": [
+            "rectangle",
+            "rounded_rectangle",
+            "circle",
+            "ellipse",
+            "semicircle",
+            "polygon",
+            "bezier_polygon",
+            "polyline",
+            "composite_2d",
+            "unknown"
+          ]
+        },
+        "w": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "d": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "radius": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "radius_x": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "radius_y": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "corner_radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "side": {
+          "enum": [
+            "downstage",
+            "upstage",
+            "left",
+            "right",
+            "front",
+            "back",
+            "unknown"
+          ]
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/vec2"
+          }
+        },
+        "closed": {
+          "type": "boolean"
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/footprint"
+          }
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "source_views": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source_kind"
+          }
+        }
+      }
+    },
+    "primitive_geometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "box",
+            "cylinder",
+            "sphere",
+            "plane",
+            "cone",
+            "torus",
+            "curve",
+            "mesh_proxy",
+            "unknown"
+          ]
+        },
+        "segments": {
+          "type": "integer",
+          "minimum": 3
+        },
+        "bevel": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "procedural_geometry": {
+      "type": "object",
+      "required": [
+        "shape_family"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "shape_family": {
+          "enum": [
+            "straight_stairs",
+            "curved_stairs",
+            "tiered_platform",
+            "circular_stage",
+            "semi_circular_apron",
+            "pleated_curtain",
+            "box_truss",
+            "ladder_truss",
+            "stage_spotlight",
+            "wash_light",
+            "monitor_wedge",
+            "led_screen_wall",
+            "scenic_wall",
+            "arch",
+            "column_pair",
+            "rail",
+            "unknown"
+          ]
+        },
+        "step_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "step_rise": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "step_run": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "pleat_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pleat_depth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "segment_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cross_section": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "diagonal_pattern": {
+          "enum": [
+            "zigzag",
+            "x_brace",
+            "vertical_only",
+            "unknown"
+          ]
+        },
+        "top_valance": {
+          "type": "boolean"
+        },
+        "side_legs": {
+          "type": "boolean"
+        },
+        "detail_params": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "geometry": {
+      "type": "object",
+      "required": [
+        "representation"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "representation": {
+          "enum": [
+            "primitive",
+            "composite",
+            "contour_extrusion",
+            "procedural",
+            "asset_ref",
+            "proxy",
+            "unknown"
+          ]
+        },
+        "shape": {
+          "type": "string",
+          "description": "Short human/machine-readable shape label, e.g. circle, truss_box, pleated_surface."
+        },
+        "primitive": {
+          "$ref": "#/$defs/primitive_geometry"
+        },
+        "footprint": {
+          "$ref": "#/$defs/footprint"
+        },
+        "extrude_height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "composite_parts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/geometry"
+          }
+        },
+        "procedural": {
+          "$ref": "#/$defs/procedural_geometry"
+        },
+        "front_face": {
+          "enum": [
+            "+x",
+            "-x",
+            "+y",
+            "-y",
+            "+z",
+            "-z",
+            "audience",
+            "unknown"
+          ]
+        },
+        "coordinate_mode": {
+          "enum": [
+            "bottom_center",
+            "center",
+            "custom_anchor",
+            "image_plane",
+            "unknown"
+          ]
+        },
+        "detail_params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "source_views": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source_kind"
+          }
+        }
+      }
+    },
+    "material": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "wood, velvet_fabric, brushed_metal, plastic, painted_surface, glass, emissive_screen, etc."
+        },
+        "color_name": {
+          "type": "string"
+        },
+        "color_hex": {
+          "type": "string",
+          "pattern": "^#?[0-9A-Fa-f]{6}$"
+        },
+        "finish": {
+          "type": "string",
+          "description": "matte, soft_matte, semi_gloss, glossy, metallic, fabric, etc."
+        },
+        "roughness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "metallic": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "emission_strength": {
+          "type": "number",
+          "minimum": 0
+        },
+        "texture_hint": {
+          "type": "string"
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "source": {
+          "$ref": "#/$defs/source_kind"
+        }
+      }
+    },
+    "placement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "anchor": {
+          "enum": [
+            "bottom_center",
+            "center",
+            "front_center",
+            "back_center",
+            "left_edge",
+            "right_edge",
+            "custom",
+            "unknown"
+          ]
+        },
+        "zone": {
+          "type": "string",
+          "description": "downstage, center, upstage, overhead, stage_left, stage_right, etc."
+        },
+        "side": {
+          "enum": [
+            "left",
+            "right",
+            "center",
+            "upstage",
+            "downstage",
+            "both",
+            "unknown"
+          ]
+        },
+        "attached_to": {
+          "type": "string"
+        },
+        "mounted_on": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "faces": {
+          "type": "string"
+        },
+        "coordinate_mode": {
+          "enum": [
+            "world",
+            "relative",
+            "image_inferred",
+            "unknown"
+          ]
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "visibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "overall": {
+          "enum": [
+            "visible",
+            "partially_visible",
+            "occluded",
+            "inferred",
+            "not_visible",
+            "unknown"
+          ]
+        },
+        "by_view": {
+          "type": "object",
+          "additionalProperties": {
+            "enum": [
+              "visible",
+              "partially_visible",
+              "occluded",
+              "inferred",
+              "not_visible",
+              "unknown"
+            ]
+          }
+        },
+        "inferred_parts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "source_evidence": {
+      "type": "object",
+      "required": [
+        "source"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/source_kind"
+        },
+        "source_id": {
+          "type": "string",
+          "description": "image id, transcript id, or internal evidence id."
+        },
+        "supports": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Fields supported by this evidence, e.g. existence, material.color_name, footprint."
+        },
+        "observed_value": {
+          "description": "Observed value from this source. Any JSON type."
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "enum": [
+            "procedural",
+            "asset_ref",
+            "proxy_fallback",
+            "none"
+          ]
+        },
+        "asset_type": {
+          "type": "string"
+        },
+        "asset_uri": {
+          "type": "string"
+        },
+        "retrieval_keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fallback_geometry": {
+          "$ref": "#/$defs/geometry"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        }
+      }
+    },
+    "generation_hints": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "builder": {
+          "type": "string",
+          "description": "Preferred generator function, e.g. build_curtain, build_box_truss, build_contour_stage."
+        },
+        "lod": {
+          "enum": [
+            "proxy",
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "editable_handles": {
+          "type": "boolean"
+        },
+        "preserve_relations": {
+          "type": "boolean"
+        }
+      }
+    },
+    "light_attributes": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "enum": [
+            "spot",
+            "wash",
+            "par",
+            "beam",
+            "flood",
+            "point",
+            "area",
+            "unknown"
+          ]
+        },
+        "target": {
+          "type": "string"
+        },
+        "beam_angle_deg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 180
+        },
+        "intensity": {
+          "type": "number",
+          "minimum": 0
+        },
+        "color_temperature_k": {
+          "type": "number",
+          "minimum": 1000
+        },
+        "color_hex": {
+          "type": "string",
+          "pattern": "^#?[0-9A-Fa-f]{6}$"
+        },
+        "visible_beam": {
+          "type": "boolean"
+        }
+      }
+    },
+    "screen_attributes": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "resolution": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "curvature_deg": {
+          "type": "number"
+        },
+        "emissive": {
+          "type": "boolean"
+        }
+      }
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "light": {
+          "$ref": "#/$defs/light_attributes"
+        },
+        "screen": {
+          "$ref": "#/$defs/screen_attributes"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "required": [
+        "id",
+        "role"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "subtype": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "geometry": {
+          "$ref": "#/$defs/geometry"
+        },
+        "material": {
+          "$ref": "#/$defs/material"
+        },
+        "placement": {
+          "$ref": "#/$defs/placement"
+        },
+        "size": {
+          "$ref": "#/$defs/size"
+        },
+        "position": {
+          "$ref": "#/$defs/vec3"
+        },
+        "rotation": {
+          "$ref": "#/$defs/vec3"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "source_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source_evidence"
+          }
+        }
+      }
+    },
+    "object_category": {
+      "enum": [
+        "platform",
+        "stairs",
+        "ramp",
+        "curtain",
+        "scenic_background",
+        "screen",
+        "truss",
+        "light",
+        "audio",
+        "rigging",
+        "furniture",
+        "prop",
+        "set_piece",
+        "decor",
+        "rail",
+        "column",
+        "arch",
+        "wall",
+        "floor",
+        "ceiling_piece",
+        "floor_marking",
+        "group_proxy",
+        "unknown"
+      ]
+    },
+    "object": {
+      "type": "object",
+      "required": [
+        "id",
+        "category",
+        "label"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/$defs/object_category"
+        },
+        "subtype": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "parent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "group_id": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/$defs/vec3"
+        },
+        "rotation": {
+          "$ref": "#/$defs/vec3"
+        },
+        "size": {
+          "$ref": "#/$defs/size"
+        },
+        "size_range": {
+          "$ref": "#/$defs/size_range"
+        },
+        "relative_size": {
+          "$ref": "#/$defs/relative_size"
+        },
+        "geometry": {
+          "$ref": "#/$defs/geometry"
+        },
+        "material": {
+          "$ref": "#/$defs/material"
+        },
+        "placement": {
+          "$ref": "#/$defs/placement"
+        },
+        "visibility": {
+          "$ref": "#/$defs/visibility"
+        },
+        "attributes": {
+          "$ref": "#/$defs/attributes"
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        },
+        "asset": {
+          "$ref": "#/$defs/asset"
+        },
+        "generation_hints": {
+          "$ref": "#/$defs/generation_hints"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "source": {
+          "$ref": "#/$defs/source_kind"
+        },
+        "source_views": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source_kind"
+          }
+        },
+        "source_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source_evidence"
+          }
+        },
+        "parameter_states": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "position": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/parameter_state"
+                },
+                {
+                  "properties": {
+                    "preview_value": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        }
+                      ]
+                    },
+                    "adopted_value": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 3,
+                          "maxItems": 3
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "size.w": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/parameter_state"
+                },
+                {
+                  "properties": {
+                    "preview_value": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        }
+                      ]
+                    },
+                    "adopted_value": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "size.d": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/parameter_state"
+                },
+                {
+                  "properties": {
+                    "preview_value": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        }
+                      ]
+                    },
+                    "adopted_value": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "size.h": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/parameter_state"
+                },
+                {
+                  "properties": {
+                    "preview_value": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        }
+                      ]
+                    },
+                    "adopted_value": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "material": {
+              "$ref": "#/$defs/parameter_state"
+            },
+            "geometry.shape": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/parameter_state"
+                },
+                {
+                  "properties": {
+                    "preview_value": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ]
+                    },
+                    "adopted_value": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "material.type": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/parameter_state"
+                },
+                {
+                  "properties": {
+                    "preview_value": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ]
+                    },
+                    "adopted_value": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "material.color_hex": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/parameter_state"
+                },
+                {
+                  "properties": {
+                    "preview_value": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "string",
+                          "pattern": "^#[0-9A-Fa-f]{6}$"
+                        }
+                      ]
+                    },
+                    "adopted_value": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "string",
+                          "pattern": "^#[0-9A-Fa-f]{6}$"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "object_notes": {
+          "type": "string"
+        },
+        "parameter_info": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "expressed_requirement": {
+                "type": "string"
+              },
+              "value_source": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "prototype": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "$ref": "#/$defs/object_category"
+        },
+        "subtype": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "size": {
+          "$ref": "#/$defs/size"
+        },
+        "geometry": {
+          "$ref": "#/$defs/geometry"
+        },
+        "material": {
+          "$ref": "#/$defs/material"
+        },
+        "placement": {
+          "$ref": "#/$defs/placement"
+        },
+        "attributes": {
+          "$ref": "#/$defs/attributes"
+        },
+        "asset": {
+          "$ref": "#/$defs/asset"
+        },
+        "generation_hints": {
+          "$ref": "#/$defs/generation_hints"
+        }
+      }
+    },
+    "distribution": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "enum": [
+            "linear",
+            "grid",
+            "radial",
+            "mirror_pair",
+            "manual_points",
+            "along_path",
+            "unknown"
+          ]
+        },
+        "from": {
+          "$ref": "#/$defs/vec3"
+        },
+        "to": {
+          "$ref": "#/$defs/vec3"
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/vec3"
+          }
+        },
+        "axis": {
+          "enum": [
+            "x",
+            "y",
+            "z",
+            "custom",
+            "unknown"
+          ]
+        },
+        "spacing": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "mirror_axis": {
+          "enum": [
+            "x",
+            "y",
+            "stage_centerline",
+            "unknown"
+          ]
+        },
+        "target_relation": {
+          "type": "string"
+        }
+      }
+    },
+    "object_group": {
+      "type": "object",
+      "required": [
+        "id",
+        "category",
+        "count",
+        "prototype",
+        "distribution"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "prototype": {
+          "$ref": "#/$defs/prototype"
+        },
+        "distribution": {
+          "$ref": "#/$defs/distribution"
+        },
+        "expanded_object_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "source_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source_evidence"
+          }
+        }
+      }
+    },
+    "relation": {
+      "type": "object",
+      "required": [
+        "type",
+        "subject"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "on_top_of",
+            "in_front_of",
+            "behind",
+            "left_of",
+            "right_of",
+            "above",
+            "below",
+            "centered_on",
+            "aligned_with",
+            "attached_to",
+            "mounted_on",
+            "aimed_at",
+            "light_focus",
+            "connected_to",
+            "suspended_from",
+            "supported_by",
+            "surrounds",
+            "nested_in",
+            "part_of",
+            "mirrored_with",
+            "repeated_along",
+            "parallel_to",
+            "perpendicular_to",
+            "faces",
+            "distance",
+            "no_occlusion",
+            "occluded_by",
+            "blocks_view_of"
+          ]
+        },
+        "subject": {
+          "type": "string"
+        },
+        "target": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "source": {
+          "$ref": "#/$defs/source_kind"
+        },
+        "source_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source_evidence"
+          }
+        }
+      }
+    },
+    "constraint": {
+      "type": "object",
+      "required": [
+        "type",
+        "message"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "preserve_object",
+            "preserve_count",
+            "preserve_layout",
+            "avoid_new_objects",
+            "avoid_occlusion",
+            "stage_safety",
+            "user_intent",
+            "visual_consistency",
+            "unknown"
+          ]
+        },
+        "objects": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "priority": {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/source_kind"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        }
+      }
+    },
+    "camera": {
+      "type": "object",
+      "required": [
+        "id",
+        "view_name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "view_name": {
+          "$ref": "#/$defs/source_kind"
+        },
+        "position": {
+          "$ref": "#/$defs/vec3"
+        },
+        "target": {
+          "$ref": "#/$defs/vec3"
+        },
+        "elevation": {
+          "enum": [
+            "eye_level",
+            "slightly_above",
+            "high",
+            "semi_overhead",
+            "unknown"
+          ]
+        },
+        "distance": {
+          "enum": [
+            "close",
+            "medium",
+            "wide",
+            "unknown"
+          ]
+        },
+        "focal_length": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "source_image": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "lighting_scene": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "ambient_level": {
+          "type": "number",
+          "minimum": 0
+        },
+        "mood": {
+          "type": "string"
+        },
+        "dominant_color_temperature_k": {
+          "type": "number",
+          "minimum": 1000
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "stage": {
+      "type": "object",
+      "required": [
+        "width",
+        "depth"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "depth": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height_clearance": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "shape": {
+          "type": "string"
+        },
+        "footprint": {
+          "$ref": "#/$defs/footprint"
+        },
+        "material": {
+          "$ref": "#/$defs/material"
+        },
+        "geometry": {
+          "$ref": "#/$defs/geometry"
+        },
+        "source_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source_evidence"
+          }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "raw",
+            "validated",
+            "has_conflicts",
+            "partial"
+          ]
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "severity",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "enum": [
+                  "out_of_bounds",
+                  "overlap",
+                  "occlusion",
+                  "missing_field",
+                  "floating",
+                  "unknown_reference",
+                  "ambiguous_type",
+                  "unsupported_geometry",
+                  "inconsistent_anchor",
+                  "multi_view_inconsistency",
+                  "appearance_conflict",
+                  "count_conflict",
+                  "size_conflict"
+                ]
+              },
+              "severity": {
+                "enum": [
+                  "info",
+                  "warning",
+                  "error"
+                ]
+              },
+              "objects": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "field": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "resolution": {
+                "type": "string"
+              },
+              "source_evidence": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/source_evidence"
+                }
+              }
+            }
+          }
+        },
+        "filled": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "object",
+              "field",
+              "value",
+              "reason"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "object": {
+                "type": "string"
+              },
+              "field": {
+                "type": "string"
+              },
+              "value": {},
+              "reason": {
+                "type": "string"
+              },
+              "confidence": {
+                "$ref": "#/$defs/confidence"
+              }
+            }
+          }
+        },
+        "unresolved_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "created_at": {
+          "type": "string"
+        },
+        "workflow": {
+          "type": "string"
+        },
+        "frontend_file": {
+          "type": "string"
+        },
+        "source_voice": {
+          "type": "string"
+        },
+        "models": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "notes": {
+          "type": "string"
+        },
+        "schema_notes": {
+          "type": "string"
+        }
+      }
+    },
+    "scene": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "stage",
+        "objects"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "coordinate_system": {
+          "$ref": "#/$defs/coordinate_system"
+        },
+        "stage": {
+          "$ref": "#/$defs/stage"
+        },
+        "objects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/object"
+          }
+        },
+        "object_groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/object_group"
+          }
+        },
+        "relations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/relation"
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/constraint"
+          }
+        },
+        "cameras": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/camera"
+          }
+        },
+        "lighting": {
+          "$ref": "#/$defs/lighting_scene"
+        },
+        "source_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source_evidence"
+          }
+        },
+        "validation": {
+          "$ref": "#/$defs/validation"
+        },
+        "metadata": {
+          "$ref": "#/$defs/metadata"
+        }
+      }
+    },
+    "parameter_state": {
+      "type": "object",
+      "required": [
+        "expressed_requirement",
+        "preview_value",
+        "value_source",
+        "adoption_status",
+        "adopted_value",
+        "scope",
+        "verification"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "expressed_requirement": {
+          "type": "string"
+        },
+        "preview_value": {},
+        "value_source": {
+          "type": "string"
+        },
+        "adoption_status": {
+          "enum": [
+            "provisional",
+            "adopted"
+          ]
+        },
+        "adopted_value": {},
+        "scope": {
+          "type": "string"
+        },
+        "verification": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "suggested_value": {}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "adoption_status": {
+                "const": "adopted"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "adopted_value": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
